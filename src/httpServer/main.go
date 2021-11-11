@@ -7,7 +7,9 @@
 package httpServer
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"net"
 	"strconv"
 )
@@ -31,8 +33,28 @@ func ListenAndServe(portNumber int32) error {
 			return err
 		}
 
-		fmt.Print("> New client from " + clientConnection.RemoteAddr().String() + " connected\n")
+		go handleHttpRequest(clientConnection)
 	}
+
+	return nil
+}
+
+//	handle HTTP request
+func handleHttpRequest(clientConnection net.Conn) error {
+
+	fmt.Print("> New client from " + clientConnection.RemoteAddr().String() + " connected\n")
+
+	requestLine, err := bufio.NewReader(clientConnection).ReadBytes('\n')
+
+	if err != nil {
+		clientConnection.Close()
+		return err
+	}
+
+	log.Println("Client message:", string(requestLine[:len(requestLine)-1]))
+
+	clientConnection.Write([]byte("200 OK"))
+	clientConnection.Close()
 
 	return nil
 }
