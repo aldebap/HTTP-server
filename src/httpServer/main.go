@@ -13,7 +13,6 @@ import (
 	"net"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 //	start listening the TCP/IP port and serve HTTP requests
@@ -44,17 +43,21 @@ func ListenAndServe(portNumber int32) error {
 //	handle HTTP request
 func handleHttpRequest(clientConnection net.Conn) error {
 
-	fmt.Print("> New client from " + clientConnection.RemoteAddr().String() + " connected\n")
+	log.Print("> New client from " + clientConnection.RemoteAddr().String() + " connected")
+
+	//	get a reader for the request
+	requestReader := bufio.NewReader(clientConnection)
 
 	//	read the start line
-	requestLine, err := bufio.NewReader(clientConnection).ReadBytes('\n')
+	requestLine, _, err := requestReader.ReadLine()
 	if err != nil {
 		clientConnection.Close()
 		return err
 	}
 
+	//	TODO: this regexp compilation should be made only once for better performance
 	startLineRegEx, _ := regexp.Compile(`^(\S+)\s+(\S+)\s+(\S.*)$`)
-	tokens := startLineRegEx.FindAllStringSubmatch(strings.TrimSuffix(string(requestLine), "\n"), -1)
+	tokens := startLineRegEx.FindAllStringSubmatch(string(requestLine), -1)
 
 	if nil != tokens && len(tokens[0]) == 4 {
 
@@ -70,12 +73,42 @@ func handleHttpRequest(clientConnection net.Conn) error {
 	}
 
 	//	read the request headers
+	requestHeaderRegEx, _ := regexp.Compile(`^(\S+):\s+(\S.*)$`)
 
-	clientConnection.Write([]byte("200 OK"))
-	clientConnection.Write([]byte("Content-Type: text/html"))
-	clientConnection.Write([]byte("Content-Length: 13"))
-	clientConnection.Write([]byte(""))
-	clientConnection.Write([]byte("<html></html>"))
+	for {
+
+		requestLine, _, err := requestReader.ReadLine()
+		if err != nil {
+			clientConnection.Close()
+			return err
+		}
+
+		//	the first empty line indicates the end of headers
+		if len(requestLine) == 0 {
+			break
+		}
+
+		tokens = requestHeaderRegEx.FindAllStringSubmatch(string(requestLine), -1)
+
+		if nil != tokens && len(tokens[0]) == 3 {
+
+			fmt.Printf("Header: %s --> %s\n", tokens[0][1], tokens[0][2])
+		} else {
+
+			fmt.Printf("Bad request: %s\n", string(requestLine))
+
+			clientConnection.Write([]byte("400 Bad Request"))
+			clientConnection.Close()
+
+			return nil
+		}
+	}
+
+	clientConnection.Write([]byte("HTTP/1.0 200 OK\n"))
+	clientConnection.Write([]byte("Content-Type: text/html\n"))
+	clientConnection.Write([]byte("Content-Length: 14\n"))
+	clientConnection.Write([]byte("\n"))
+	clientConnection.Write([]byte("<html></html>\n"))
 	clientConnection.Close()
 
 	return nil
