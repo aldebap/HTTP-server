@@ -21,6 +21,7 @@ type configurationData struct {
 
 type App struct {
 	Configuration configurationData
+	HttpServer    httpServer.Server
 }
 
 //	initialize the application
@@ -39,11 +40,13 @@ func (a *App) Initialize(configurationFileName string) error {
 
 	defer configurationDataFile.Close()
 
+	a.HttpServer.Initialize(a.Configuration.PortNumber)
+
 	return nil
 }
 
 //	run the application
 func (a *App) Run() error {
 
-	return httpServer.ListenAndServe(a.Configuration.PortNumber)
+	return a.HttpServer.ListenAndServe()
 }

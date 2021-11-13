@@ -15,12 +15,55 @@ import (
 	"strconv"
 )
 
+type Server struct {
+	Address string
+}
+
+type Request struct {
+	Method   string
+	Resource string
+	Protocol string
+
+	Host           string
+	UserAgent      string
+	Accept         string
+	AcceptEncoding string
+}
+
+type Response struct {
+}
+
+//	HTTP methods
+const Get = "GET"
+
+//	standard request headers
+const HostHeader = "Host"
+const UserAgentHeader = "User-Agent"
+const AcceptHeader = "Accept"
+const AcceptEncodingHeader = "Accept-Encoding"
+
+//	regexs required to parse HTTP requests
+var startLineRegEx *regexp.Regexp
+var requestHeaderRegEx *regexp.Regexp
+
+//	initialize a HTTP Server
+func (server *Server) Initialize(portNumber int32) error {
+
+	server.Address = "localhost:" + strconv.Itoa(int(portNumber))
+
+	//	compile all regexs required to parse HTTP requests
+	startLineRegEx, _ = regexp.Compile(`^(\S+)\s+(\S+)\s+(\S.*)$`)
+	requestHeaderRegEx, _ = regexp.Compile(`^(\S+):\s+(\S.*)$`)
+
+	return nil
+}
+
 //	start listening the TCP/IP port and serve HTTP requests
-func ListenAndServe(portNumber int32) error {
+func (server *Server) ListenAndServe() error {
 
-	log.Println("> Listening on port " + strconv.Itoa(int(portNumber)))
+	log.Println("> Listening socket: " + server.Address)
 
-	socketListening, err := net.Listen("tcp", "localhost:"+strconv.Itoa(int(portNumber)))
+	socketListening, err := net.Listen("tcp", server.Address)
 	if err != nil {
 		return err
 	}
@@ -34,16 +77,18 @@ func ListenAndServe(portNumber int32) error {
 			return err
 		}
 
-		go handleHttpRequest(clientConnection)
+		go server.handleHttpRequest(clientConnection)
 	}
 
 	return nil
 }
 
 //	handle HTTP request
-func handleHttpRequest(clientConnection net.Conn) error {
+func (server *Server) handleHttpRequest(clientConnection net.Conn) error {
 
 	log.Print("> New client from " + clientConnection.RemoteAddr().String() + " connected")
+
+	var request Request
 
 	//	get a reader for the request
 	requestReader := bufio.NewReader(clientConnection)
@@ -55,16 +100,16 @@ func handleHttpRequest(clientConnection net.Conn) error {
 		return err
 	}
 
-	//	TODO: this regexp compilation should be made only once for better performance
-	startLineRegEx, _ := regexp.Compile(`^(\S+)\s+(\S+)\s+(\S.*)$`)
 	tokens := startLineRegEx.FindAllStringSubmatch(string(requestLine), -1)
 
 	if nil != tokens && len(tokens[0]) == 4 {
 
-		fmt.Printf("Operation: %s - Resource: %s - Protocol: %s\n", tokens[0][1], tokens[0][2], tokens[0][3])
+		request.Method = tokens[0][1]
+		request.Resource = tokens[0][2]
+		request.Protocol = tokens[0][3]
 	} else {
 
-		fmt.Printf("Bad request: %s\n", string(requestLine))
+		log.Printf("Bad request: %s\n", string(requestLine))
 
 		clientConnection.Write([]byte("400 Bad Request"))
 		clientConnection.Close()
@@ -73,8 +118,6 @@ func handleHttpRequest(clientConnection net.Conn) error {
 	}
 
 	//	read the request headers
-	requestHeaderRegEx, _ := regexp.Compile(`^(\S+):\s+(\S.*)$`)
-
 	for {
 
 		requestLine, _, err := requestReader.ReadLine()
@@ -92,10 +135,23 @@ func handleHttpRequest(clientConnection net.Conn) error {
 
 		if nil != tokens && len(tokens[0]) == 3 {
 
-			fmt.Printf("Header: %s --> %s\n", tokens[0][1], tokens[0][2])
+			//	check if it's a standard header
+			if HostHeader == tokens[0][1] {
+
+				request.Host = tokens[0][2]
+			} else if UserAgentHeader == tokens[0][1] {
+
+				request.UserAgent = tokens[0][2]
+			} else if AcceptHeader == tokens[0][1] {
+
+				request.Accept = tokens[0][2]
+			} else if AcceptEncodingHeader == tokens[0][1] {
+
+				request.AcceptEncoding = tokens[0][2]
+			}
 		} else {
 
-			fmt.Printf("Bad request: %s\n", string(requestLine))
+			log.Printf("Bad request: %s\n", string(requestLine))
 
 			clientConnection.Write([]byte("400 Bad Request"))
 			clientConnection.Close()
@@ -104,6 +160,9 @@ func handleHttpRequest(clientConnection net.Conn) error {
 		}
 	}
 
+	fmt.Printf("[debug] Request: %s\n", request)
+
+	//	dummy response for now
 	clientConnection.Write([]byte("HTTP/1.0 200 OK\n"))
 	clientConnection.Write([]byte("Content-Type: text/html\n"))
 	clientConnection.Write([]byte("Content-Length: 14\n"))
