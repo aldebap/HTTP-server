@@ -8,15 +8,18 @@ package httpServer
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type Server struct {
-	Address string
+	Address   string
+	Directory []DirectoryConfiguration
 }
 
 type Request struct {
@@ -77,14 +80,14 @@ func (server *Server) ListenAndServe() error {
 			return err
 		}
 
-		go server.handleHttpRequest(clientConnection)
+		go server.handleHttpClient(clientConnection)
 	}
 
 	return nil
 }
 
 //	handle HTTP request
-func (server *Server) handleHttpRequest(clientConnection net.Conn) error {
+func (server *Server) handleHttpClient(clientConnection net.Conn) error {
 
 	log.Print("> New client from " + clientConnection.RemoteAddr().String() + " connected")
 
@@ -160,15 +163,49 @@ func (server *Server) handleHttpRequest(clientConnection net.Conn) error {
 		}
 	}
 
+	responseWriter := bufio.NewWriter(clientConnection)
+	server.handleHttpRequest(request, responseWriter)
+	responseWriter.Flush()
+	clientConnection.Close()
+
+	return nil
+}
+
+func (server *Server) handleHttpRequest(request Request, responseWriter *bufio.Writer) error {
+
 	fmt.Printf("[debug] Request: %s\n", request)
 
+	//	check if the resource can be served
+	var responseContent string
+
+	for i := 0; i < len(server.Directory); i++ {
+
+		if strings.Index(request.Resource, server.Directory[i].Context) == 0 {
+
+			responseContent = "<html><head /><body>Resouce: " + request.Resource + " being served from directory: " + server.Directory[i].DirectoryName + "</html>"
+		}
+	}
+
+	//	if there's no content, the resource was not found
+	if len(responseContent) == 0 {
+
+		responseWriter.Write([]byte("HTTP/1.0 404 Resource not found\n"))
+		responseWriter.Write([]byte("\n"))
+
+		return errors.New("resource not found")
+	}
+
 	//	dummy response for now
-	clientConnection.Write([]byte("HTTP/1.0 200 OK\n"))
-	clientConnection.Write([]byte("Content-Type: text/html\n"))
-	clientConnection.Write([]byte("Content-Length: 14\n"))
-	clientConnection.Write([]byte("\n"))
-	clientConnection.Write([]byte("<html></html>\n"))
-	clientConnection.Close()
+	_, err := responseWriter.Write([]byte("HTTP/1.0 200 OK\n"))
+	if err != nil {
+		fmt.Printf("[debug] Error writing response content: %s\n", err)
+	}
+	responseWriter.Write([]byte("Content-Type: text/html\n"))
+	responseWriter.Write([]byte("Content-Length: " + strconv.Itoa(len(responseContent)) + "\n"))
+	responseWriter.Write([]byte("\n"))
+	responseWriter.Write([]byte(responseContent))
+
+	fmt.Printf("[debug] Response content: %s\n", responseContent)
 
 	return nil
 }
