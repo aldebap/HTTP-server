@@ -17,9 +17,14 @@ import (
 	"strings"
 )
 
+type RequestHandler struct {
+	Context         string
+	DirectoryConfig DirectoryConfiguration
+}
+
 type Server struct {
-	Address   string
-	Directory []DirectoryConfiguration
+	Address string
+	Handler []RequestHandler
 }
 
 type Request struct {
@@ -176,13 +181,17 @@ func (server *Server) handleHttpRequest(request Request, responseWriter *bufio.W
 	fmt.Printf("[debug] Request: %s\n", request)
 
 	//	check if the resource can be served
-	var responseContent string
+	var responseContent []byte
+	var err error
 
-	for i := 0; i < len(server.Directory); i++ {
+	for i := 0; i < len(server.Handler); i++ {
 
-		if strings.Index(request.Resource, server.Directory[i].Context) == 0 {
+		if strings.Index(request.Resource, server.Handler[i].Context) == 0 {
 
-			responseContent = "<html><head /><body>Resouce: " + request.Resource + " being served from directory: " + server.Directory[i].DirectoryName + "</html>"
+			responseContent, err = handleFilesFromDirectory(request.Resource[len(server.Handler[i].Context)+1:], server.Handler[i].DirectoryConfig)
+			if err == nil {
+				break
+			}
 		}
 	}
 
@@ -196,16 +205,14 @@ func (server *Server) handleHttpRequest(request Request, responseWriter *bufio.W
 	}
 
 	//	dummy response for now
-	_, err := responseWriter.Write([]byte("HTTP/1.0 200 OK\n"))
+	_, err = responseWriter.Write([]byte("HTTP/1.0 200 OK\n"))
 	if err != nil {
 		fmt.Printf("[debug] Error writing response content: %s\n", err)
 	}
 	responseWriter.Write([]byte("Content-Type: text/html\n"))
 	responseWriter.Write([]byte("Content-Length: " + strconv.Itoa(len(responseContent)) + "\n"))
 	responseWriter.Write([]byte("\n"))
-	responseWriter.Write([]byte(responseContent))
-
-	fmt.Printf("[debug] Response content: %s\n", responseContent)
+	responseWriter.Write(responseContent)
 
 	return nil
 }

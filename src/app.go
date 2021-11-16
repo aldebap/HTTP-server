@@ -62,13 +62,12 @@ func (a *App) Run() error {
 
 		var directoryConfig httpServer.DirectoryConfiguration
 
-		directoryConfig.Context = a.Configuration.ServerDirectory[i].Context
 		directoryConfig.DirectoryName = a.Configuration.ServerDirectory[i].DirectoryName
 		directoryConfig.DefaultFile = a.Configuration.ServerDirectory[i].DefaultFile
 		directoryConfig.Navigation = a.Configuration.ServerDirectory[i].Navigation
 		directoryConfig.FollowSubdirectories = a.Configuration.ServerDirectory[i].FollowSubdirectories
 
-		a.HttpServer.ServeDirectory(directoryConfig)
+		a.HttpServer.ServeDirectory(a.Configuration.ServerDirectory[i].Context, directoryConfig)
 	}
 
 	return a.HttpServer.ListenAndServe()
