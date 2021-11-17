@@ -151,10 +151,13 @@ do
 		verify )
 		echo '+++ execute integration tests'
 
+		${PROJECT_TARGET} &
+		PID=$!
 		#docker-compose up -d
-		#newman run 'test/Integrated Tests.postman_collection.json' --environment 'test/Localhost.postman_environment.json'
+		newman run 'test/Error handling scenarios.postman_collection.json' --environment 'test/Localhost.postman_environment.json'
+		newman run 'test/Getting resources scenarios.postman_collection.json' --environment 'test/Localhost.postman_environment.json'
 		#docker-compose stop
-
+		kill -9 ${PID}
 		;;
 
 	#	run the target

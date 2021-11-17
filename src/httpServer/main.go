@@ -43,6 +43,16 @@ type Response struct {
 
 //	HTTP methods
 const Get = "GET"
+const Post = "POST"
+const Put = "PUT"
+const Patch = "PATCH"
+const Delete = "DELETE"
+
+//	HTTP response status
+const StatusOk = 200
+const StatusBadRequest = 400
+const StatusNotFound = 404
+const StatusMethodNotAllowed = 405
 
 //	standard request headers
 const HostHeader = "Host"
@@ -180,39 +190,66 @@ func (server *Server) handleHttpRequest(request Request, responseWriter *bufio.W
 
 	fmt.Printf("[debug] Request: %s\n", request)
 
-	//	check if the resource can be served
+	var responseCode int
 	var responseContent []byte
 	var err error
 
-	for i := 0; i < len(server.Handler); i++ {
+	switch request.Method {
 
-		if strings.Index(request.Resource, server.Handler[i].Context) == 0 {
+	case Get:
+		//	check if the resource can be served
+		for i := 0; i < len(server.Handler); i++ {
 
-			responseContent, err = handleFilesFromDirectory(request.Resource[len(server.Handler[i].Context)+1:], server.Handler[i].DirectoryConfig)
-			if err == nil {
-				break
+			if strings.Index(request.Resource, server.Handler[i].Context) == 0 {
+
+				responseContent, err = handleFilesFromDirectory(request.Resource[len(server.Handler[i].Context)+1:], server.Handler[i].DirectoryConfig)
+				if err == nil {
+					break
+				}
 			}
 		}
+		//	if there's no content, the resource was not found
+		if len(responseContent) > 0 {
+
+			responseCode = StatusOk
+		} else {
+
+			responseCode = StatusNotFound
+		}
+
+	case Post:
+		responseCode = StatusMethodNotAllowed
+	case Put:
+		responseCode = StatusMethodNotAllowed
+	case Patch:
+		responseCode = StatusMethodNotAllowed
+	case Delete:
+		responseCode = StatusMethodNotAllowed
 	}
 
-	//	if there's no content, the resource was not found
-	if len(responseContent) == 0 {
+	//	output the response
+	switch responseCode {
 
+	case StatusOk:
+		_, err = responseWriter.Write([]byte("HTTP/1.0 200 OK\n"))
+		if err != nil {
+			fmt.Printf("[debug] Error writing response content: %s\n", err)
+		}
+		responseWriter.Write([]byte("Content-Type: text/html\n"))
+		responseWriter.Write([]byte("Content-Length: " + strconv.Itoa(len(responseContent)) + "\n"))
+		responseWriter.Write([]byte("\n"))
+		responseWriter.Write(responseContent)
+
+	case StatusNotFound:
 		responseWriter.Write([]byte("HTTP/1.0 404 Resource not found\n"))
 		responseWriter.Write([]byte("\n"))
-
 		return errors.New("resource not found")
-	}
 
-	//	dummy response for now
-	_, err = responseWriter.Write([]byte("HTTP/1.0 200 OK\n"))
-	if err != nil {
-		fmt.Printf("[debug] Error writing response content: %s\n", err)
+	case StatusMethodNotAllowed:
+		responseWriter.Write([]byte("HTTP/1.0 405 Method not allowed\n"))
+		responseWriter.Write([]byte("\n"))
+		return errors.New("Method not allowed")
 	}
-	responseWriter.Write([]byte("Content-Type: text/html\n"))
-	responseWriter.Write([]byte("Content-Length: " + strconv.Itoa(len(responseContent)) + "\n"))
-	responseWriter.Write([]byte("\n"))
-	responseWriter.Write(responseContent)
 
 	return nil
 }

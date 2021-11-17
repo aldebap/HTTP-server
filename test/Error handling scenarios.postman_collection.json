@@ -1,0 +1,108 @@
+{
+	"info": {
+		"_postman_id": "5726e8fa-b0e2-4ad3-bec8-2b5ccfb9ce35",
+		"name": "Error handling scenarios",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "HTTP method not allowed",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//  check the HTTP return code",
+							"pm.test(\"HTTP retornou 405 Method Not Allowed\", () => {",
+							"    pm.expect( responseCode.code ).to.eql( 405 );",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{httpServer-domain}}/documents/test.html",
+					"host": [
+						"{{httpServer-domain}}"
+					],
+					"path": [
+						"documents",
+						"test.html"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Request a resource from a non existing context",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//  check the HTTP return code",
+							"pm.test(\"HTTP retornou 404 Resource Not Found\", () => {",
+							"    pm.expect( responseCode.code ).to.eql( 404 );",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{httpServer-domain}}/root/test.html",
+					"host": [
+						"{{httpServer-domain}}"
+					],
+					"path": [
+						"root",
+						"test.html"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Request a non existing resource",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//  check the HTTP return code",
+							"pm.test(\"HTTP retornou 404 Resource Not Found\", () => {",
+							"    pm.expect( responseCode.code ).to.eql( 404 );",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{httpServer-domain}}/documents/test.xml",
+					"host": [
+						"{{httpServer-domain}}"
+					],
+					"path": [
+						"documents",
+						"test.xml"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

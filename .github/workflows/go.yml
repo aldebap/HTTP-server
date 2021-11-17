@@ -2,9 +2,9 @@ name: Go
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   HOME_PATH: ${{ github.workspace }}
@@ -15,31 +15,37 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.17
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
 
-    - name: Set up NodeJS
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
+      - name: Set up NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
 
-    - name: Install Korn shell
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install ksh
+      - name: Install Korn shell
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install ksh
 
-    - name: Install Newman
-      shell: bash
-      run: |
-        npm install -g newman
+      - name: Install Newman
+        shell: bash
+        run: |
+          npm install -g newman
 
-    - name: Build
-      shell: bash
-      run: |
-        cd ${HOME_PATH}
-        ./build.sh dependencies compile
+      - name: Build
+        shell: bash
+        run: |
+          cd ${HOME_PATH}
+          ./build.sh dependencies compile
+
+      - name: Integration Tests
+        shell: bash
+        run: |
+          cd ${HOME_PATH}
+          ./build.sh verify

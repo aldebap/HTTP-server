@@ -2,24 +2,30 @@
 	"info": {
 		"_postman_id": "28150df6-b89b-4f46-97da-7bdc78adb665",
 		"name": "Getting resources scenarios",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
 	},
 	"item": [
 		{
 			"name": "Request a html resource",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//  check the HTTP return code",
+							"pm.test(\"HTTP retornou 200 OK\", () => {",
+							"    pm.expect( responseCode.code ).to.eql( 200 );",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": {
-					"raw": "{{httpServer-domain}}/documents/test.html",
-					"host": [
-						"{{httpServer-domain}}"
-					],
-					"path": [
-						"documents",
-						"test.html"
-					]
-				}
+				"url": "{{httpServer-domain}}/documents/test.html"
 			},
 			"response": []
 		}
