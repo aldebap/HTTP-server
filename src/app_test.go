@@ -13,6 +13,32 @@ import (
 	"testing"
 )
 
+//	generate invalid Json configuration file
+func generateInvalidConfig() (*os.File, string, error) {
+
+	//	create an invalid temporary configuration file
+	tmpConfigFile, err := ioutil.TempFile(os.TempDir(), "config")
+	if err != nil {
+		return nil, "Unable to create temporary configuration file: %v", err
+	}
+
+	//	write the configuration to file
+	configurationData := []byte(`{
+			"portNumber": 1234
+		`)
+	_, err = tmpConfigFile.Write(configurationData)
+	if nil != err {
+		return nil, "Unable to write to temporary configuration file: %v", err
+	}
+
+	err = tmpConfigFile.Close()
+	if nil != err {
+		return nil, "Unable to close temporary configuration file: %v", err
+	}
+
+	return tmpConfigFile, "", nil
+}
+
 //	generate configuration without directories to perform some tests
 func generateConfigWithoutDirectories() (*os.File, string, error) {
 
@@ -56,8 +82,40 @@ func TestInitialize_scenario01(t *testing.T) {
 	})
 }
 
-//	scenario 02 - test to load configuration without directories to perform some tests
+//	scenario 02 - test error handling on attempt to load configuration file
 func TestInitialize_scenario02(t *testing.T) {
+
+	t.Run("error handling on attempt to load configuration file", func(t *testing.T) {
+
+		// TODO: need to mock ioutil.ReadAll() to test this scenario
+	})
+}
+
+//	scenario 03 - test error handling on attempt to parse JSon content
+func TestInitialize_scenario03(t *testing.T) {
+
+	t.Run("error handling on attempt to parse JSon content", func(t *testing.T) {
+
+		tmpConfigFile, msg, err := generateInvalidConfig()
+		if nil != err {
+			t.Fatalf(msg, err)
+		}
+		defer os.Remove(tmpConfigFile.Name())
+
+		//	load the configuration file
+		want := errors.New("unexpected end of JSON input")
+		testApp := App{}
+
+		got := testApp.Initialize(tmpConfigFile.Name())
+		if want.Error() != got.Error() {
+
+			t.Errorf("invalid configuration loading result: got %q, want %q", got, want)
+		}
+	})
+}
+
+//	scenario 04 - test to load configuration without directories to perform some tests
+func TestInitialize_scenario04(t *testing.T) {
 
 	t.Run("load configuration without directories", func(t *testing.T) {
 

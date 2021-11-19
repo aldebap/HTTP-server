@@ -42,10 +42,15 @@ func (a *App) Initialize(configurationFileName string) error {
 	}
 
 	//	load the configuration file
-	//	TODO: need to add error handling here
-	fileContent, _ := ioutil.ReadAll(configurationDataFile)
+	fileContent, err := ioutil.ReadAll(configurationDataFile)
+	if err != nil {
+		return err
+	}
 
-	json.Unmarshal(fileContent, &a.Configuration)
+	err = json.Unmarshal(fileContent, &a.Configuration)
+	if err != nil {
+		return err
+	}
 
 	defer configurationDataFile.Close()
 
