@@ -28,6 +28,54 @@
 				"url": "{{httpServer-domain}}/documents/test.html"
 			},
 			"response": []
+		},
+		{
+			"name": "Request the default resource",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//  check the HTTP return code",
+							"pm.test(\"HTTP retornou 200 OK\", () => {",
+							"    pm.expect( responseCode.code ).to.eql( 200 );",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{httpServer-domain}}/documents"
+			},
+			"response": []
+		},
+		{
+			"name": "Request the default resource (slash terminated)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//  check the HTTP return code",
+							"pm.test(\"HTTP retornou 200 OK\", () => {",
+							"    pm.expect( responseCode.code ).to.eql( 200 );",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "{{httpServer-domain}}/documents/"
+			},
+			"response": []
 		}
 	]
 }

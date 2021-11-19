@@ -35,11 +35,19 @@ func (server *Server) ServeDirectory(context string, directoryConfig DirectoryCo
 //	return the file content if the resource matches a file in the directory
 func handleFilesFromDirectory(resource string, directoryConfig DirectoryConfiguration) ([]byte, error) {
 
-	fmt.Printf("[debug] attempting to find resource: %s\n", resource)
-
 	if len(resource) == 0 {
-		//	TODO: attempt to get the default file for the directory
+
+		fmt.Printf("[debug] attempting to find resource: %s\n", directoryConfig.DefaultFile)
+
+		resourceFile, err := os.Open(directoryConfig.DirectoryName + "/" + directoryConfig.DefaultFile)
+		if err == nil {
+			resourceFileContent, _ := ioutil.ReadAll(resourceFile)
+
+			return resourceFileContent, nil
+		}
 	} else {
+
+		fmt.Printf("[debug] attempting to find resource: %s\n", resource)
 
 		resourceFile, err := os.Open(directoryConfig.DirectoryName + "/" + resource)
 		if err == nil {
