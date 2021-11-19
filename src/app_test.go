@@ -7,6 +7,7 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -20,7 +21,6 @@ func generateConfigWithoutDirectories() (*os.File, string, error) {
 	if err != nil {
 		return nil, "Unable to create temporary configuration file: %v", err
 	}
-	defer os.Remove(tmpConfigFile.Name())
 
 	//	write the configuration to file
 	configurationData := []byte(`{
@@ -45,13 +45,13 @@ func TestInitialize_scenario01(t *testing.T) {
 	t.Run("load configuration with invalid file name", func(t *testing.T) {
 
 		//	load the configuration file
-		want := error(nil)
+		want := errors.New("open invalid.config: no such file or directory")
 		testApp := App{}
 
 		got := testApp.Initialize("invalid.config")
-		if want != got {
+		if want.Error() != got.Error() {
 
-			t.Errorf("invalid configuration loading result: got %v, want %v", got, want)
+			t.Errorf("invalid configuration loading result: got %q, want %q", got, want)
 		}
 	})
 }
@@ -61,16 +61,17 @@ func TestInitialize_scenario02(t *testing.T) {
 
 	t.Run("load configuration without directories", func(t *testing.T) {
 
-		configFile, msg, err := generateConfigWithoutDirectories()
+		tmpConfigFile, msg, err := generateConfigWithoutDirectories()
 		if nil != err {
 			t.Fatalf(msg, err)
 		}
+		defer os.Remove(tmpConfigFile.Name())
 
 		//	load the configuration file
 		want := int32(1234)
 		testApp := App{}
 
-		err = testApp.Initialize(configFile.Name())
+		err = testApp.Initialize(tmpConfigFile.Name())
 		if nil != err {
 
 			t.Fatalf("Error loading configuration file: %v", err)

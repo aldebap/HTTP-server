@@ -35,6 +35,8 @@ func (server *Server) ServeDirectory(context string, directoryConfig DirectoryCo
 //	return the file content if the resource matches a file in the directory
 func handleFilesFromDirectory(resource string, directoryConfig DirectoryConfiguration) ([]byte, error) {
 
+	var err error
+
 	if len(resource) == 0 {
 
 		fmt.Printf("[debug] attempting to find resource: %s\n", directoryConfig.DefaultFile)
@@ -57,5 +59,5 @@ func handleFilesFromDirectory(resource string, directoryConfig DirectoryConfigur
 		}
 	}
 
-	return nil, nil
+	return nil, err
 }

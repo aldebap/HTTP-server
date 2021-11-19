@@ -44,6 +44,12 @@ jobs:
           cd ${HOME_PATH}
           ./build.sh dependencies compile
 
+      - name: Unit Tests
+        shell: bash
+        run: |
+          cd ${HOME_PATH}
+          ./build.sh test
+
       - name: Integration Tests
         shell: bash
         run: |
