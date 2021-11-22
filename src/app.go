@@ -33,6 +33,9 @@ type App struct {
 	HttpServer    httpServer.Server
 }
 
+//	variables to functions that need to be mocked
+var readAll = ioutil.ReadAll
+
 //	initialize the application
 func (a *App) Initialize(configurationFileName string) error {
 
@@ -40,9 +43,10 @@ func (a *App) Initialize(configurationFileName string) error {
 	if err != nil {
 		return err
 	}
+	defer configurationDataFile.Close()
 
 	//	load the configuration file
-	fileContent, err := ioutil.ReadAll(configurationDataFile)
+	fileContent, err := readAll(configurationDataFile)
 	if err != nil {
 		return err
 	}
@@ -51,8 +55,6 @@ func (a *App) Initialize(configurationFileName string) error {
 	if err != nil {
 		return err
 	}
-
-	defer configurationDataFile.Close()
 
 	a.HttpServer.Initialize(a.Configuration.PortNumber)
 
@@ -63,16 +65,16 @@ func (a *App) Initialize(configurationFileName string) error {
 func (a *App) Run() error {
 
 	//	add the directories list to the server configuration
-	for i := 0; i < len(a.Configuration.ServerDirectory); i++ {
+	for _, directory := range a.Configuration.ServerDirectory[0:] {
 
-		var directoryConfig httpServer.DirectoryConfiguration
+		var serverDirectoryConfig httpServer.DirectoryConfiguration
 
-		directoryConfig.DirectoryName = a.Configuration.ServerDirectory[i].DirectoryName
-		directoryConfig.DefaultFile = a.Configuration.ServerDirectory[i].DefaultFile
-		directoryConfig.Navigation = a.Configuration.ServerDirectory[i].Navigation
-		directoryConfig.FollowSubdirectories = a.Configuration.ServerDirectory[i].FollowSubdirectories
+		serverDirectoryConfig.DirectoryName = directory.DirectoryName
+		serverDirectoryConfig.DefaultFile = directory.DefaultFile
+		serverDirectoryConfig.Navigation = directory.Navigation
+		serverDirectoryConfig.FollowSubdirectories = directory.FollowSubdirectories
 
-		a.HttpServer.ServeDirectory(a.Configuration.ServerDirectory[i].Context, directoryConfig)
+		a.HttpServer.ServeDirectory(directory.Context, serverDirectoryConfig)
 	}
 
 	return a.HttpServer.ListenAndServe()

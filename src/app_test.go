@@ -8,6 +8,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -87,7 +88,30 @@ func TestInitialize_scenario02(t *testing.T) {
 
 	t.Run("error handling on attempt to load configuration file", func(t *testing.T) {
 
-		// TODO: need to mock ioutil.ReadAll() to test this scenario
+		//	point readAll to a mock function
+		readAll = func(io.Reader) ([]byte, error) {
+
+			return nil, errors.New("cannot read the input file")
+		}
+
+		tmpConfigFile, msg, err := generateInvalidConfig()
+		if nil != err {
+			t.Fatalf(msg, err)
+		}
+		defer os.Remove(tmpConfigFile.Name())
+
+		//	try to load the configuration file
+		want := errors.New("cannot read the input file")
+		testApp := App{}
+
+		got := testApp.Initialize(tmpConfigFile.Name())
+		if want.Error() != got.Error() {
+
+			t.Errorf("invalid configuration loading result: got %q, want %q", got, want)
+		}
+
+		//	point readAll back to io.ReadAll
+		readAll = ioutil.ReadAll
 	})
 }
 
@@ -102,7 +126,7 @@ func TestInitialize_scenario03(t *testing.T) {
 		}
 		defer os.Remove(tmpConfigFile.Name())
 
-		//	load the configuration file
+		//	try to load the configuration file
 		want := errors.New("unexpected end of JSON input")
 		testApp := App{}
 
