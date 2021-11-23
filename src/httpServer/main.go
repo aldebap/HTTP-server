@@ -12,9 +12,11 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type RequestHandler struct {
@@ -25,6 +27,7 @@ type RequestHandler struct {
 type Server struct {
 	Address string
 	Handler []RequestHandler
+	Stop    bool
 }
 
 type Request struct {
@@ -79,9 +82,16 @@ func (server *Server) Initialize(portNumber int32) error {
 //	start listening the TCP/IP port and serve HTTP requests
 func (server *Server) ListenAndServe() error {
 
-	log.Println("> Listening socket: " + server.Address)
+	log.Println("> Listening TCP socket: " + server.Address)
 
-	socketListening, err := net.Listen("tcp", server.Address)
+	server.Stop = false
+
+	serverAddress, err := net.ResolveTCPAddr("tcp", server.Address)
+	if err != nil {
+		return err
+	}
+
+	socketListening, err := net.ListenTCP("tcp", serverAddress)
 	if err != nil {
 		return err
 	}
@@ -89,14 +99,37 @@ func (server *Server) ListenAndServe() error {
 
 	//	wait for clients to connect to the server
 	for {
+		if server.Stop {
+			break
+		}
 
-		clientConnection, err := socketListening.Accept()
+		//	set a timeout to make it possible to check if a stop method was invoked
+		err = socketListening.SetDeadline(time.Now().Add(100 * time.Millisecond))
 		if err != nil {
 			return err
 		}
 
-		go server.handleHttpClient(clientConnection)
+		clientConnection, err := socketListening.Accept()
+		if err == nil {
+
+			go server.handleHttpClient(clientConnection)
+			continue
+		}
+
+		//	check if a timeout was reached, or an error really occurred
+		if !errors.Is(err, os.ErrDeadlineExceeded) {
+
+			return err
+		}
 	}
+
+	return nil
+}
+
+//	stop listening the TCP/IP port and serving HTTP requests
+func (server *Server) StopServer() error {
+
+	log.Println("> Stop server: " + server.Address)
 
 	return nil
 }

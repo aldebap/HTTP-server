@@ -66,7 +66,7 @@ func generateConfigWithoutDirectories() (*os.File, string, error) {
 	return tmpConfigFile, "", nil
 }
 
-//	scenario 01 - test to load configuration with invalid file name
+//	App.Initialize() scenario 01 - test to load configuration with invalid file name
 func TestInitialize_scenario01(t *testing.T) {
 
 	t.Run("load configuration with invalid file name", func(t *testing.T) {
@@ -83,7 +83,7 @@ func TestInitialize_scenario01(t *testing.T) {
 	})
 }
 
-//	scenario 02 - test error handling on attempt to load configuration file
+//	App.Initialize() scenario 02 - test error handling on attempt to load configuration file
 func TestInitialize_scenario02(t *testing.T) {
 
 	t.Run("error handling on attempt to load configuration file", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestInitialize_scenario02(t *testing.T) {
 	})
 }
 
-//	scenario 03 - test error handling on attempt to parse JSon content
+//	App.Initialize() scenario 03 - test error handling on attempt to parse JSon content
 func TestInitialize_scenario03(t *testing.T) {
 
 	t.Run("error handling on attempt to parse JSon content", func(t *testing.T) {
@@ -138,7 +138,7 @@ func TestInitialize_scenario03(t *testing.T) {
 	})
 }
 
-//	scenario 04 - test to load configuration without directories to perform some tests
+//	App.Initialize() scenario 04 - test to load configuration without directories to perform some tests
 func TestInitialize_scenario04(t *testing.T) {
 
 	t.Run("load configuration without directories", func(t *testing.T) {
@@ -163,5 +163,13 @@ func TestInitialize_scenario04(t *testing.T) {
 
 			t.Errorf("invalid port number: got %d, want %d", got, want)
 		}
+	})
+}
+
+//	App.Run() scenario 01 - attempt to Run the App before a call to Initialize()
+func TestRun_scenario01(t *testing.T) {
+
+	t.Run("attempt to Run the App before a call to Initialize()", func(t *testing.T) {
+
 	})
 }
