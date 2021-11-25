@@ -7,6 +7,12 @@
 			"defaultFile": "index.html",
 			"directoryNavigation": false,
 			"followSubdirectories": false
+		},
+		{
+			"context": "/managed",
+			"directory": "test/data",
+			"directoryNavigation": true,
+			"followSubdirectories": false
 		}
 	]
 }

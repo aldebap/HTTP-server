@@ -171,5 +171,6 @@ func TestRun_scenario01(t *testing.T) {
 
 	t.Run("attempt to Run the App before a call to Initialize()", func(t *testing.T) {
 
+		//	TODO: how to test App.Run() method ?
 	})
 }

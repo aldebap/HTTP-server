@@ -237,10 +237,10 @@ func (server *Server) handleHttpRequest(request Request, responseWriter *bufio.W
 
 				if len(server.Handler[i].Context)+1 > len(request.Resource) {
 
-					responseContent, err = handleFilesFromDirectory("", server.Handler[i].DirectoryConfig)
+					responseContent, err = handleFilesFromDirectory(server.Handler[i].Context, "", server.Handler[i].DirectoryConfig)
 				} else {
 
-					responseContent, err = handleFilesFromDirectory(request.Resource[len(server.Handler[i].Context)+1:], server.Handler[i].DirectoryConfig)
+					responseContent, err = handleFilesFromDirectory(server.Handler[i].Context, request.Resource[len(server.Handler[i].Context)+1:], server.Handler[i].DirectoryConfig)
 				}
 				if err == nil {
 					break
