@@ -67,20 +67,36 @@ const AcceptEncodingHeader = "Accept-Encoding"
 var startLineRegEx *regexp.Regexp
 var requestHeaderRegEx *regexp.Regexp
 
+//	variables to functions that need to be mocked
+var regexCompile = regexp.Compile
+
 //	initialize a HTTP Server
 func (server *Server) Initialize(portNumber int32) error {
 
 	server.Address = "localhost:" + strconv.Itoa(int(portNumber))
 
 	//	compile all regexs required to parse HTTP requests
-	startLineRegEx, _ = regexp.Compile(`^(\S+)\s+(\S+)\s+(\S.*)$`)
-	requestHeaderRegEx, _ = regexp.Compile(`^(\S+):\s+(\S.*)$`)
+	var err error
+
+	startLineRegEx, err = regexCompile(`^(\S+)\s+(\S+)\s+(\S.*)$`)
+	if err != nil {
+		return err
+	}
+
+	requestHeaderRegEx, err = regexCompile(`^(\S+):\s+(\S.*)$`)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 //	start listening the TCP/IP port and serve HTTP requests
 func (server *Server) ListenAndServe() error {
+
+	if server.Address == "" {
+		return errors.New("Server object must be initialized before Listening and Serving")
+	}
 
 	log.Println("> Listening TCP socket: " + server.Address)
 
