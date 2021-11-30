@@ -69,6 +69,8 @@ var requestHeaderRegEx *regexp.Regexp
 
 //	variables to functions that need to be mocked
 var regexCompile = regexp.Compile
+var resolveTCPAddr = net.ResolveTCPAddr
+var listenTCP = net.ListenTCP
 
 //	initialize a HTTP Server
 func (server *Server) Initialize(portNumber int32) error {
@@ -102,12 +104,12 @@ func (server *Server) ListenAndServe() error {
 
 	server.Stop = false
 
-	serverAddress, err := net.ResolveTCPAddr("tcp", server.Address)
+	serverAddress, err := resolveTCPAddr("tcp", server.Address)
 	if err != nil {
 		return err
 	}
 
-	socketListening, err := net.ListenTCP("tcp", serverAddress)
+	socketListening, err := listenTCP("tcp", serverAddress)
 	if err != nil {
 		return err
 	}
@@ -146,6 +148,8 @@ func (server *Server) ListenAndServe() error {
 func (server *Server) StopServer() error {
 
 	log.Println("> Stop server: " + server.Address)
+
+	server.Stop = true
 
 	return nil
 }
