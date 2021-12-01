@@ -11,6 +11,7 @@ import (
 	"net"
 	"regexp"
 	"testing"
+	"time"
 )
 
 //	Server.Initialize() scenario 01 - test to check correct error handling when startLineRegEx compilation fails
@@ -143,6 +144,34 @@ func TestListenAndServe_scenario03(t *testing.T) {
 		listenTCP = net.ListenTCP
 
 		if want.Error() != got.Error() {
+
+			t.Errorf("invalid error returned: got %q, want %q", got, want)
+		}
+	})
+}
+
+//	Server.ListenAndServe() scenario 04 - test to check correctness of deadline and server.stop() mechanisms
+func TestListenAndServe_scenario04(t *testing.T) {
+
+	t.Run("test to check correctness of deadline and server.stop() mechanisms", func(t *testing.T) {
+
+		want := error(nil)
+		httpServer := Server{}
+
+		httpServer.Initialize(5001)
+
+		//	use a goroutine to execute ListenAndServe() so it not block the test main thread
+		var got error
+
+		go func() {
+			got = httpServer.ListenAndServe()
+		}()
+
+		//	set a sleep time so the ListenAndServe() loop will be executed 10 times
+		time.Sleep(1 * time.Second)
+		httpServer.Stop = true
+
+		if want != got {
 
 			t.Errorf("invalid error returned: got %q, want %q", got, want)
 		}
